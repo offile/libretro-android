@@ -1,0 +1,6 @@
+[submodule "libretro/src/main/cpp/libretro-common"]
+	path = libretro/src/main/cpp/libretro-common
+	url = https://github.com/libretro/libretro-common
+[submodule "libretro/src/main/cpp/oboe"]
+	path = libretro/src/main/cpp/oboe
+	url = https://github.com/google/oboe
