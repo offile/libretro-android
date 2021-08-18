@@ -19,10 +19,17 @@ plugins {
 }
 
 spotless {
+    val copyRightFile = rootProject.file("spotless/copyright.kt")
     kotlin {
-        target("*/src/*/java/**/*.kt")
-        targetExclude("$buildDir/**/*.kt")
-        ktlint("0.41.0")
-        //licenseHeaderFile(rootProject.file("spotless/copyright.kt"))
+        target("**/src/**/*.kt")
+        targetExclude("$buildDir/**/*.kt", "**/cpp/libretro-common/**", "**/cpp/oboe/**")
+        ktlint("0.41.0").userData(mapOf("android" to "true"))
+
+        licenseHeaderFile(copyRightFile, "^(package|//startfile|@file)")
+    }
+    cpp {
+        target("**/src/**/*.cpp", "**/src/**/*.c", "**/src/**/*.h")
+        targetExclude("**/cpp/libretro-common/**", "**/cpp/oboe/**")
+        licenseHeaderFile(copyRightFile)
     }
 }
