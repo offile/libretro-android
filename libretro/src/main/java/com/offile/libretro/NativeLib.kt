@@ -11,7 +11,10 @@ class NativeLib {
     companion object {
         // Used to load the 'libretro' library on application startup.
         init {
-            System.loadLibrary("libretro")
+            System.loadLibrary("retro")
         }
+    }
+
+    fun tt() {
     }
 }

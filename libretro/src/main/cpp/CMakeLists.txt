@@ -5,23 +5,9 @@
 
 cmake_minimum_required(VERSION 3.10.2)
 
-# Declares and names the project.
-
 project("libretro")
-
-# Creates and names a library, sets it as either STATIC
-# or SHARED, and provides the relative paths to its source code.
-# You can define multiple libraries, and CMake builds them for you.
-# Gradle automatically packages shared libraries with your APK.
-
-add_library( # Sets the name of the library.
-             libretro
-
-             # Sets the library as a shared library.
-             SHARED
-
-             # Provides a relative path to your source file(s).
-             libretro.cpp )
+set(LIB_NAME retro)
+add_library(${LIB_NAME} SHARED libretro.cpp )
 
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by
@@ -29,20 +15,14 @@ add_library( # Sets the name of the library.
 # you want to add. CMake verifies that the library exists before
 # completing its build.
 
-find_library( # Sets the name of the path variable.
-              log-lib
+find_library(log-lib log)
 
-              # Specifies the name of the NDK library that
-              # you want CMake to locate.
-              log )
+# Build the Oboe library
+set(OBOE_DIR ./oboe)
+add_subdirectory(${OBOE_DIR} ./oboe)
 
-# Specifies libraries CMake should link to your target library. You
-# can link multiple libraries, such as libraries you define in this
-# build script, prebuilt third-party libraries, or system libraries.
+# Make the Oboe public headers available to our app
+include_directories(${OBOE_DIR}/include)
 
-target_link_libraries( # Specifies the target library.
-                       libretro
-
-                       # Links the target library to the log library
-                       # included in the NDK.
-                       ${log-lib} )
+# Specify the libraries which our native library is dependent on, including Oboe
+target_link_libraries(${LIB_NAME} ${log-lib} oboe)
