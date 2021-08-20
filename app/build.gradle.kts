@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "com.offile.libretro.example"
-        minSdk = 16
+        minSdk = 14
         targetSdk = 31
         versionCode = 1
         versionName = "1.0"

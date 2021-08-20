@@ -6,16 +6,14 @@
 cmake_minimum_required(VERSION 3.10.2)
 
 project("libretro")
-set(LIB_NAME retro)
-add_library(${LIB_NAME} SHARED libretro.cpp )
 
-# Searches for a specified prebuilt library and stores the path as a
-# variable. Because CMake includes system libraries in the search path by
-# default, you only need to specify the name of the public NDK library
-# you want to add. CMake verifies that the library exists before
-# completing its build.
+set(RETRO_LIB_NAME retro)
+include_directories(include)
+set(RETOR_SRCS Core.cpp)
+add_library(${RETRO_LIB_NAME} SHARED ${RETOR_SRCS})
 
-find_library(log-lib log)
+# Include libretro headers
+include_directories(libretro-common/include)
 
 # Build the Oboe library
 set(OBOE_DIR ./oboe)
@@ -25,4 +23,4 @@ add_subdirectory(${OBOE_DIR} ./oboe)
 include_directories(${OBOE_DIR}/include)
 
 # Specify the libraries which our native library is dependent on, including Oboe
-target_link_libraries(${LIB_NAME} ${log-lib} oboe)
+target_link_libraries(${RETRO_LIB_NAME} log oboe)
