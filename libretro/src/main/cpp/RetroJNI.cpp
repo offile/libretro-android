@@ -35,7 +35,7 @@ Java_com_offile_libretro_Retro_loadRom(JNIEnv *env, jobject thiz, jstring path) 
 JNIEXPORT void JNICALL
 Java_com_offile_libretro_Retro_unloadRom(JNIEnv *env, jobject thiz) {
     Retro *retro = get_retro(env, thiz);
-    retro->unLoadCore()
+    retro->unLoadCore();
 }
 
 JNIEXPORT void JNICALL

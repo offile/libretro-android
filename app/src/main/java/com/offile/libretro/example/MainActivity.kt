@@ -28,7 +28,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         val retro = Retro()
-        retro.loadCore("core")
+        retro.loadCore("libcore.so")
         retro.loadRom(initRom().absolutePath)
         retro.start()
     }

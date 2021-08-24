@@ -23,3 +23,11 @@ void Retro::loadRom(string &romPath) {
     info.path = romPath.c_str();
     core->retro_load_game(&info);
 }
+
+void Retro::unLoadRom() {
+
+}
+
+void Retro::start() {
+
+}
