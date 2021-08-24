@@ -8,8 +8,11 @@ cmake_minimum_required(VERSION 3.10.2)
 project("libretro")
 
 set(RETRO_LIB_NAME retro)
-include_directories(include)
-set(RETOR_SRCS Core.cpp)
+set(RETOR_SRCS
+        Retro.cpp
+        Core.cpp
+        Log.cpp
+        RetroJNI.cpp)
 add_library(${RETRO_LIB_NAME} SHARED ${RETOR_SRCS})
 
 # Include libretro headers

@@ -21,7 +21,7 @@
 #include <libretro.h>
 #include <string>
 
-namespace Retro {
+namespace retro {
 
     class Core {
     public:

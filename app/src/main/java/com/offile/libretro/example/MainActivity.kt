@@ -19,10 +19,27 @@ package com.offile.libretro.example
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import com.offile.libretro.Retro
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        val retro = Retro()
+        retro.loadCore("core")
+        retro.loadRom(initRom().absolutePath)
+        retro.start()
+    }
+
+    private fun initRom(): File{
+        val romName = "Adventure Island Classic (Europe).nes"
+        val targetRom = filesDir.resolve(romName)
+        if(!targetRom.exists()){
+            val romData = assets.open(romName).readBytes()
+            targetRom.writeBytes(romData)
+        }
+        return targetRom
     }
 }
