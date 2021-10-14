@@ -1,21 +1,33 @@
 #include "Retro.h"
 
 using retro::Retro;
+using namespace std::placeholders
 
-Retro::Retro() {
+Retro::Retro() = default;
 
-}
-
-Retro::~Retro() {
-
-}
+Retro::~Retro() = default;
 
 void Retro::loadCore(string &corePath) {
+    if(core){
+        unLoadCore();
+    }
     core = make_unique<Core>(corePath);
+
+    auto ff = &Retro::callback_video_refresh;
+
+    retro_video_refresh_t tt = [](const void *data, unsigned width,unsigned height, size_t pitch) mutable {
+        ff;
+    }
+    retro_video_refresh_t gg = std::mem_fn(&Retro::callback_video_refresh);
+    auto func = std::bind(ff, this, _1, _2, _3, _4);
+    core->retro_set_video_refresh(tt);
 }
 
 void Retro::unLoadCore() {
-    core = nullptr;
+    if(core){
+        core->retro_deinit();
+        core = nullptr;
+    }
 }
 
 void Retro::loadRom(string &romPath) {
@@ -25,7 +37,7 @@ void Retro::loadRom(string &romPath) {
 }
 
 void Retro::unLoadRom() {
-
+    core->retro_unload_game();
 }
 
 void Retro::start() {

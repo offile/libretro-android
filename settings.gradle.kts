@@ -8,4 +8,5 @@ dependencyResolutionManagement {
 }
 rootProject.name = "libretro-android"
 include(":app")
+//include(":old-retro")
 include(":libretro")

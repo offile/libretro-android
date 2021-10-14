@@ -1,40 +1,28 @@
-/**
- *     Copyright (C) 2021  offile
- *
- *     This program is free software: you can redistribute it and/or modify
- *     it under the terms of the GNU General Public License as published by
- *     the Free Software Foundation, either version 3 of the License, or
- *     (at your option) any later version.
- *
- *     This program is distributed in the hope that it will be useful,
- *     but WITHOUT ANY WARRANTY; without even the implied warranty of
- *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *     GNU General Public License for more details.
- *
- *     You should have received a copy of the GNU General Public License
- *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-
-#ifndef LIBRETRO_CORE_H
-#define LIBRETRO_CORE_H
+#ifndef RETRO_CORE_H
+#define RETRO_CORE_H
 
 #include <libretro.h>
 #include <string>
+#include <dynamic/dylib.h>
 
 namespace retro {
+    using namespace std;
 
     class Core {
+    private:
+        dylib_t coreHandle;
+
+        void open(const string &corePath);
+
+        void close();
+
     public:
-        void (*retro_init)(void);
 
-        void (*retro_deinit)(void);
-
-        unsigned (*retro_api_version)(void);
-
-        void (*retro_get_system_info)(struct retro_system_info *);
-
-        void (*retro_get_system_av_info)(struct retro_system_av_info *);
-
+        /* Sets callbacks. retro_set_environment() is guaranteed to be called
+         * before retro_init().
+         *
+         * The rest of the set_* functions are guaranteed to have been called
+         * before the first call to retro_run() is made. */
         void (*retro_set_environment)(retro_environment_t);
 
         void (*retro_set_video_refresh)(retro_video_refresh_t);
@@ -47,54 +35,102 @@ namespace retro {
 
         void (*retro_set_input_state)(retro_input_state_t);
 
-        void (*retro_set_controller_port_device)(unsigned, unsigned);
+        /* Library global initialization/deinitialization. */
+        void (*retro_init)(void);
 
+        void (*retro_deinit)(void);
+
+        /* Must return RETRO_API_VERSION. Used to validate ABI compatibility
+         * when the API is revised. */
+        unsigned (*retro_api_version)(void);
+
+        /* Gets statically known system info. Pointers provided in *info
+         * must be statically allocated.
+         * Can be called at any time, even before retro_init(). */
+        void (*retro_get_system_info)(struct retro_system_info *info);
+
+        /* Gets information about system audio/video timings and geometry.
+         * Can be called only after retro_load_game() has successfully completed.
+         * NOTE: The implementation of this function might not initialize every
+         * variable if needed.
+         * E.g. geom.aspect_ratio might not be initialized if core doesn't
+         * desire a particular aspect ratio. */
+        void (*retro_get_system_av_info)(struct retro_system_av_info *info);
+
+        /* Sets device to be used for player 'port'.
+         * By default, RETRO_DEVICE_JOYPAD is assumed to be plugged into all
+         * available ports.
+         * Setting a particular device type is not a guarantee that libretro cores
+         * will only poll input based on that particular device type. It is only a
+         * hint to the libretro core when a core cannot automatically detect the
+         * appropriate input device type on its own. It is also relevant when a
+         * core can change its behavior depending on device type.
+         *
+         * As part of the core's implementation of retro_set_controller_port_device,
+         * the core should call RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS to notify the
+         * frontend if the descriptions for any controls have changed as a
+         * result of changing the device type.
+         */
+        void (*retro_set_controller_port_device)(unsigned port, unsigned device);
+
+        /* Resets the current game. */
         void (*retro_reset)(void);
 
+        /* Runs the game for one video frame.
+         * During retro_run(), input_poll callback must be called at least once.
+         *
+         * If a frame is not rendered for reasons where a game "dropped" a frame,
+         * this still counts as a frame, and retro_run() should explicitly dupe
+         * a frame if GET_CAN_DUPE returns true.
+         * In this case, the video callback can take a NULL argument for data.
+         */
         void (*retro_run)(void);
 
+        /* Returns the amount of data the implementation requires to serialize
+         * internal state (save states).
+         * Between calls to retro_load_game() and retro_unload_game(), the
+         * returned size is never allowed to be larger than a previous returned
+         * value, to ensure that the frontend can allocate a save state buffer once.
+         */
         size_t (*retro_serialize_size)(void);
 
-        bool (*retro_serialize)(void *, size_t);
+        /* Serializes internal state. If failed, or size is lower than
+         * retro_serialize_size(), it should return false, true otherwise. */
+        bool (*retro_serialize)(void *data, size_t size);
 
-        bool (*retro_unserialize)(const void *, size_t);
+        bool (*retro_unserialize)(const void *data, size_t size);
 
         void (*retro_cheat_reset)(void);
 
-        void (*retro_cheat_set)(unsigned, bool, const char *);
+        void (*retro_cheat_set)(unsigned index, bool enabled, const char *code);
 
-        bool (*retro_load_game)(const struct retro_game_info *);
+        /* Loads a game.
+         * Return true to indicate successful loading and false to indicate load failure.
+         */
+        bool (*retro_load_game)(const struct retro_game_info *game);
 
-        bool (*retro_load_game_special)(unsigned,
-                                        const struct retro_game_info *, size_t);
+        /* Loads a "special" kind of game. Should not be used,
+         * except in extreme cases. */
+        bool (*retro_load_game_special)(
+                unsigned game_type,
+                const struct retro_game_info *info, size_t num_info
+        );
 
+        /* Unloads the currently loaded game. Called before retro_deinit(void). */
         void (*retro_unload_game)(void);
 
+        /* Gets region of game. */
         unsigned (*retro_get_region)(void);
 
-        void *(*retro_get_memory_data)(unsigned);
+        /* Gets region of memory. */
+        void (**retro_get_memory_data)(unsigned id);
 
-        size_t (*retro_get_memory_size)(unsigned);
+        size_t (*retro_get_memory_size)(unsigned id);
 
-        unsigned poll_type;
-        bool inited;
-        bool symbols_inited;
-        bool game_loaded;
-        bool input_polled;
-        bool has_set_subsystems;
-        bool has_set_input_descriptors;
-
-        Core(const std::string &soCorePath);
+        Core(const std::string &corePath);
 
         ~Core();
-
-    private:
-        void *coreHandle = nullptr;
-
-        void open(const std::string &corePath);
-        void close();
     };
-
 }
 
-#endif //LIBRETRO_CORE_H
+#endif //RETRO_CORE_H

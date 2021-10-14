@@ -1,29 +1,55 @@
-#include "Core.h"
-#include <dynamic/dylib.h>
-#include <string>
+/**
+ *     Copyright (C) 2021  clovero
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
+#include "Core.h"
+#include <dlfcn.h>
+
+#include <cstdlib>
+
+using namespace std;
 using retro::Core;
 
-function_t get_symbol(dylib_t handle, const char *symbol) {
-    function_t result = dylib_proc(handle, symbol);
+void* get_symbol(void* handle, const char* symbol) {
+    void* result = dlsym(handle, symbol);
     if (!result) {
-        std::string error("Missing libretro core symbol: ", symbol);
+        string error("Missing libretro core symbol: ", symbol);
         throw std::runtime_error(error);
     }
     return result;
 }
 
-#define load_symbol(HANDLE,V, SYMBOL) do { \
-    function_t func = get_symbol(HANDLE, SYMBOL);\
-    memcpy(&V, &func, sizeof(func));\
+#define load_symbol(HANDLE,V, SYMBOL) do {\
+    *(void**)&V = get_symbol(HANDLE, SYMBOL); \
   } while (0)
 
 #define load_retro_symbol(S) load_symbol(coreHandle, S, #S)
 
-void Core::open(const std::string &corePath) {
-    coreHandle = dylib_load(corePath.c_str());
+Core::Core(const std::string &corePath) {
+    open(corePath);
+}
+
+Core::~Core() {
+    close();
+}
+
+void Core::open(const string &corePath) {
+    coreHandle = dlopen(corePath.c_str(), RTLD_LOCAL | RTLD_LAZY);
     if(!coreHandle) {
-        throw std::runtime_error(dylib_error());
+        throw std::runtime_error(dlerror());
     }
     try {
         load_retro_symbol(retro_init);
@@ -55,19 +81,12 @@ void Core::open(const std::string &corePath) {
         close();
         throw e;
     }
+
 }
 
 void Core::close() {
     if (coreHandle) {
-        dylib_close(coreHandle);
+        dlclose(coreHandle);
         coreHandle = nullptr;
     }
-}
-
-Core::Core(const std::string &corePath) {
-    open(corePath);
-}
-
-Core::~Core() {
-    close();
 }

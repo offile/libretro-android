@@ -5,34 +5,24 @@
 #include <string>
 
 using namespace std;
+using namespace retro;
 
 namespace retro {
 
-    class Retro {
+class Retro{
     public:
         Retro();
-
         ~Retro();
 
         void loadCore(string &corePath);
-
         void unLoadCore();
-
         void loadRom(string &romPath);
-
         void unLoadRom();
-
         void start();
 
     private:
         unique_ptr<Core> core;
-
-        void callback_video_refresh(
-                const void *data,
-                unsigned width,
-                unsigned height,
-                size_t pitch);
-    };
+};
 
 }
 
